@@ -1,6 +1,6 @@
-# AI Code Reviewer
+# Gitlab AI Code Reviewer
 
-AI Code Reviewer는 GitLab 저장소의 코드 변경 사항을 **자동으로 리뷰**해 주는 Flask 기반 웹 애플리케이션입니다.
+Gitlab AI Code Reviewer는 GitLab 저장소의 코드 변경 사항을 **자동으로 리뷰**해 주는 Flask 기반 웹 애플리케이션입니다.
 GitLab Webhook(머지 요청 및 푸시 이벤트)을 받아 diff를 조회하고, OpenAI를 사용해 코드 리뷰 코멘트를 생성한 뒤, GitLab에 **마크다운 형식의 댓글**로 남깁니다.
 
 ---
