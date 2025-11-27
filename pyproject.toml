@@ -17,6 +17,7 @@ requires-python = ">=3.11"
 # - langchain-ollama: Ollama용 LangChain 통합
 dependencies = [
     "flask==2.2.3",
+    "werkzeug>=2.2.2,<3.0.0",
     "requests==2.28.2",
     "openai>=1.0.0,<2.0.0",
     "python-dotenv==1.0.0",
