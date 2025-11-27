@@ -1,0 +1,26 @@
+[project]
+name = "gitlab-ai-code-reviewer"
+version = "0.1.0"
+description = "GitLab webhook-based AI code reviewer using OpenAI"
+readme = "README.md"
+requires-python = ">=3.11"
+
+# 애플리케이션 런타임 의존성
+# - Flask: 웹 서버 및 라우팅
+# - requests: GitLab HTTP API 호출
+# - openai: OpenAI Python SDK (v1.x)
+# - python-dotenv: 테스트 시 .env 자동 로딩
+# - gunicorn: 프로덕션용 WSGI 서버 (Docker에서 사용)
+dependencies = [
+    "flask==2.2.3",
+    "requests==2.28.2",
+    "openai>=1.0.0,<2.0.0",
+    "python-dotenv==1.0.0",
+    "gunicorn>=21.2.0,<22.0.0",
+]
+
+[dependency-groups]
+# 개발/테스트용 의존성 (로컬 개발 시 uv sync 기본 포함)
+dev = [
+    "pytest>=7.4.4,<9.0.0",
+]

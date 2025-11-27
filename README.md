@@ -78,13 +78,13 @@ GitLab Webhook은 이 엔드포인트로 이벤트를 전송해야 합니다.
 
 ## 요구 사항
 
-- Python **3.8 이상** (예제 Docker 이미지 기준 3.9 사용)
+- Python **3.11 이상** (프로젝트 `pyproject.toml` 및 uv 기준)
 - GitLab 프로젝트 1개 이상 (Webhook 설정 권한 필요)
 - OpenAI API Key
 - GitLab Personal Access Token (API 권한 포함)
 - Docker 및 docker-compose (선택, 컨테이너 실행용)
 
-Python 의존성은 `requirements.txt`에 정의되어 있습니다.
+Python 의존성은 `pyproject.toml`로 관리되며, 로컬 개발 시 **uv** 사용을 권장합니다.
 
 ---
 
@@ -178,13 +178,16 @@ GITLAB_WEBHOOK_SECRET_TOKEN=your-webhook-secret-token
 
 테스트 실행 예시는 다음과 같습니다.
 
-- 전체 테스트 실행:
+- 전체 테스트 실행 (uv 기반 권장):
+
   ```bash
-  python -m pytest
+  uv sync          # 의존성 및 가상환경 동기화
+  uv run pytest    # 또는 uv run python -m pytest
   ```
+
 - 통합 테스트만 선택 실행:
   ```bash
-  python -m pytest -m integration
+  uv run pytest -m integration
   ```
 
 ---
