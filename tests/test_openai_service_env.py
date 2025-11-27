@@ -15,7 +15,7 @@ def test_generate_review_content_with_real_openai():
     if not api_key:
         pytest.skip("OPENAI_API_KEY is not set; skipping integration test.")
 
-    model = os.getenv("OPENAI_API_MODEL") or "gpt-3.5-turbo"
+    model = os.getenv("OPENAI_API_MODEL") or "gpt-5.1-mini"
 
     messages = [
         {

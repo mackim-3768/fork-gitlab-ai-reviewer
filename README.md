@@ -96,7 +96,7 @@ Python 의존성은 `requirements.txt`에 정의되어 있습니다.
   OpenAI API Key
 
 - `OPENAI_API_MODEL`  
-  사용할 OpenAI ChatCompletion 모델 이름 (예: `gpt-3.5-turbo`)
+  사용할 OpenAI ChatCompletion 모델 이름 (예: `gpt-5.1-mini`)
 
 - `GITLAB_ACCESS_TOKEN`  
   GitLab Personal Access Token. MR 조회 및 댓글 작성이 가능하도록 `api` 스코프 권장.
@@ -142,7 +142,7 @@ Python 의존성은 `requirements.txt`에 정의되어 있습니다.
 
 ```env
 OPENAI_API_KEY=your-openai-api-key
-OPENAI_API_MODEL=gpt-3.5-turbo
+OPENAI_API_MODEL=gpt-5.1-mini
 
 GITLAB_ACCESS_TOKEN=your-gitlab-personal-access-token
 GITLAB_URL=https://gitlab.com
@@ -288,7 +288,7 @@ GitLab 프로젝트에서 Webhook을 아래와 같이 설정합니다.
 1. GitLab에서 diff를 조회해 하나의 문자열로 합칩니다.
 2. 파일 상태(추가/삭제/리네임/수정)를 포함해 diff를 파일 단위로 정리하고, 시니어 코드 리뷰어 역할과 체크리스트(요약, 코드 품질, 버그/로직, 보안, 제안)를 담은 프롬프트를 구성합니다. 이때 LLM이 먼저 **한국어 리뷰**, 이어서 `---` 한 줄, 그리고 **동일 구조의 영어 리뷰**를 생성하도록 지시합니다.
 3. OpenAI Python SDK v1 기준 `client.chat.completions.create(...)`에 아래와 유사한 설정으로 요청합니다.
-   - `model = OPENAI_API_MODEL` 또는 기본값 `gpt-3.5-turbo`
+   - `model = OPENAI_API_MODEL` 또는 기본값 `gpt-5.1-mini`
 4. 응답 내용을 정리해 GitLab에 마크다운 댓글로 등록합니다.
 
 에러 발생 시:
