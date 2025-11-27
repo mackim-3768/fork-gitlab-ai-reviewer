@@ -8,12 +8,37 @@ from openai import OpenAI
 logger = logging.getLogger(__name__)
 
 
+_DEFAULT_OPENAI_TIMEOUT_SECONDS = 300
+
+
+def _get_openai_timeout() -> float:
+    """OpenAI 요청 타임아웃(초)을 환경 변수에서 읽어온다."""
+    raw_value = os.environ.get("OPENAI_API_TIMEOUT_SECONDS")
+    if not raw_value:
+        return _DEFAULT_OPENAI_TIMEOUT_SECONDS
+
+    try:
+        seconds = float(raw_value)
+        if seconds <= 0:
+            raise ValueError
+        return seconds
+    except ValueError:
+        logger.warning(
+            "Invalid OPENAI_API_TIMEOUT_SECONDS '%s', using default %s",
+            raw_value,
+            _DEFAULT_OPENAI_TIMEOUT_SECONDS,
+        )
+        return _DEFAULT_OPENAI_TIMEOUT_SECONDS
+
+
 def _get_openai_client(api_key: Optional[str] = None) -> OpenAI:
     """환경 변수 또는 인자로부터 OpenAI 클라이언트를 생성한다."""
     effective_api_key = api_key or os.environ.get("OPENAI_API_KEY")
     if not effective_api_key:
         raise ValueError("OPENAI_API_KEY is not set")
-    return OpenAI(api_key=effective_api_key)
+
+    timeout_seconds = _get_openai_timeout()
+    return OpenAI(api_key=effective_api_key, timeout=timeout_seconds)
 
 
 def generate_review_content(
