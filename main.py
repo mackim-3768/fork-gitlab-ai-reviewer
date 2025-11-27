@@ -14,14 +14,6 @@ gitlab_api_base_url = (
     f"{gitlab_base_url.rstrip('/')}/api/v4" if gitlab_base_url else None
 )
 
-api_base = os.environ.get("AZURE_OPENAI_API_BASE")
-if api_base != None:
-    openai.api_base = api_base
-
-openai.api_version = os.environ.get("AZURE_OPENAI_API_VERSION")
-if openai.api_version != None:
-    openai.api_type = "azure"
-
 
 def _get_bool_env(name: str, default: bool) -> bool:
     value = os.environ.get(name)
@@ -87,7 +79,6 @@ def webhook():
 
         try:
             completions = openai.ChatCompletion.create(
-                deployment_id=os.environ.get("OPENAI_API_MODEL"),
                 model=os.environ.get("OPENAI_API_MODEL") or "gpt-3.5-turbo",
                 temperature=0.2,
                 stream=False,
@@ -142,7 +133,6 @@ def webhook():
         messages = generate_review_prompt(changes)
         try:
             completions = openai.ChatCompletion.create(
-                deployment_id=os.environ.get("OPENAI_API_MODEL"),
                 model=os.environ.get("OPENAI_API_MODEL") or "gpt-3.5-turbo",
                 temperature=0.7,
                 stream=False,

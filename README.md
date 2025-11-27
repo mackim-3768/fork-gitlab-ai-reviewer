@@ -1,7 +1,7 @@
 # AI Code Reviewer
 
 AI Code Reviewer는 GitLab 저장소의 코드 변경 사항을 **자동으로 리뷰**해 주는 Flask 기반 웹 애플리케이션입니다.
-GitLab Webhook(머지 요청 및 푸시 이벤트)을 받아 diff를 조회하고, OpenAI(또는 Azure OpenAI)를 사용해 코드 리뷰 코멘트를 생성한 뒤, GitLab에 **마크다운 형식의 댓글**로 남깁니다.
+GitLab Webhook(머지 요청 및 푸시 이벤트)을 받아 diff를 조회하고, OpenAI를 사용해 코드 리뷰 코멘트를 생성한 뒤, GitLab에 **마크다운 형식의 댓글**로 남깁니다.
 
 ---
 
@@ -78,36 +78,11 @@ GitLab Webhook은 이 엔드포인트로 이벤트를 전송해야 합니다.
 
 - Python **3.8 이상** (예제 Docker 이미지 기준 3.9 사용)
 - GitLab 프로젝트 1개 이상 (Webhook 설정 권한 필요)
-- OpenAI 또는 Azure OpenAI API Key
+- OpenAI API Key
 - GitLab Personal Access Token (API 권한 포함)
 - Docker 및 docker-compose (선택, 컨테이너 실행용)
 
 Python 의존성은 `requirements.txt`에 정의되어 있습니다.
-
----
-
-## 설치 (로컬 실행)
-
-### 1. 저장소 클론
-
-```bash
-git clone git@github.com:dhkimxx/OpenAI-Gitlab-PR-Review.git
-cd OpenAI-Gitlab-PR-Review
-```
-
-### 2. (선택) 가상환경 생성 및 활성화
-
-```bash
-python -m venv .venv
-source .venv/bin/activate  # macOS / Linux
-# .venv\Scripts\activate  # Windows
-```
-
-### 3. 의존성 설치
-
-```bash
-pip install -r requirements.txt
-```
 
 ---
 
@@ -118,12 +93,10 @@ pip install -r requirements.txt
 ### 필수 환경 변수
 
 - `OPENAI_API_KEY`  
-  OpenAI 또는 Azure OpenAI API Key
+  OpenAI API Key
 
-- `OPENAI_API_MODEL`
-
-  - OpenAI 사용 시: 모델 이름 (예: `gpt-3.5-turbo`)
-  - Azure OpenAI 사용 시: **배포 이름(deployment name)** 이며 `deployment_id`와 `model` 파라미터에 함께 사용됩니다.
+- `OPENAI_API_MODEL`  
+  사용할 OpenAI ChatCompletion 모델 이름 (예: `gpt-3.5-turbo`)
 
 - `GITLAB_TOKEN`  
   GitLab Personal Access Token. MR 조회 및 댓글 작성이 가능하도록 `api` 스코프 권장.
@@ -165,24 +138,6 @@ pip install -r requirements.txt
   `push` 이벤트(커밋) 를 처리할지 여부를 제어합니다. 설정하지 않으면 기본값은 `true`입니다.  
   값이 `1`, `true`, `yes`, `on`(대소문자 무시) 중 하나이면 활성화되고, 그 외 값은 비활성화로 간주됩니다.
 
-### 선택 환경 변수 (Azure OpenAI 사용 시)
-
-- `AZURE_OPENAI_API_BASE`  
-  Azure OpenAI 엔드포인트, 예:
-
-  ```text
-  https://YOUR-RESOURCE-NAME.openai.azure.com/
-  ```
-
-- `AZURE_OPENAI_API_VERSION`  
-  API 버전, 예:
-
-  ```text
-  2023-05-15
-  ```
-
-두 값이 설정되면 애플리케이션은 `openai.api_type = "azure"`를 사용하도록 자동 구성됩니다.
-
 ### `.env` 예시
 
 ```env
@@ -198,9 +153,6 @@ LOG_LEVEL=INFO
 
 ENABLE_MERGE_REQUEST_REVIEW=true
 ENABLE_PUSH_REVIEW=true
-
-AZURE_OPENAI_API_BASE= # optional
-AZURE_OPENAI_API_VERSION= # optional
 ```
 
 ---
@@ -333,10 +285,6 @@ GitLab 프로젝트에서 Webhook을 아래와 같이 설정합니다.
 
 - **OpenAI 관련 에러**
   - `OPENAI_API_KEY`, `OPENAI_API_MODEL` 값이 유효한지 확인합니다.
-  - Azure OpenAI 사용 시에는 다음 값들을 다시 확인합니다.
-    - `AZURE_OPENAI_API_BASE`
-    - `AZURE_OPENAI_API_VERSION`
-    - 배포 이름(`OPENAI_API_MODEL`)
 
 ---
 
