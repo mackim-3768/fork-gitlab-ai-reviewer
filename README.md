@@ -156,6 +156,11 @@ LOG_LEVEL=INFO
 ENABLE_MERGE_REQUEST_REVIEW=true
 ENABLE_PUSH_REVIEW=true
 
+# (옵션) 비동기 리뷰 큐 및 레이트 리밋 설정
+REVIEW_MAX_REQUESTS_PER_MINUTE=2 # 분당 시작 가능한 리뷰 작업 수 (기본값: 2)
+REVIEW_WORKER_CONCURRENCY=1 # 리뷰 작업을 처리할 워커 스레드 개수 (기본값: 1)
+REVIEW_MAX_PENDING_JOBS=100 # 경고용 대기열 길이 soft limit (기본값: 100)
+
 # (옵션) 통합 테스트용 GitLab 설정
 # GITLAB_TEST_PROJECT_ID=123
 # GITLAB_TEST_MERGE_REQUEST_IID=1
@@ -190,25 +195,7 @@ ENABLE_PUSH_REVIEW=true
 
 ## 실행 방법
 
-### 1. 로컬 개발 서버 실행
-
-`main.py`는 Flask 개발 서버를 직접 실행합니다.
-
-```bash
-python main.py
-```
-
-- Host: `0.0.0.0`
-- Port: `9655`
-- Webhook 엔드포인트 예시:
-
-  ```text
-  http://localhost:9655/webhook
-  ```
-
-개발/테스트 용도로 적합하며, 운영 환경에서는 아래 Docker + gunicorn 사용을 권장합니다.
-
-### 2. Docker + docker-compose로 실행 (권장)
+### 1. Docker + docker-compose로 실행 (권장)
 
 이 저장소에는 `Dockerfile`과 `docker-compose.yaml`이 포함되어 있습니다.
 
@@ -244,7 +231,7 @@ http://localhost:9655/webhook
 컨테이너 내부에서는 다음 커맨드로 애플리케이션이 실행됩니다.
 
 ```bash
-gunicorn --bind 0.0.0.0:9655 main:app
+gunicorn --bind 0.0.0.0:9655 src.main:app
 ```
 
 ---
