@@ -2,7 +2,7 @@ import os
 
 import pytest
 
-from gitlab_client import (
+from src.gitlab_client import (
     get_merge_request_changes,
     get_commit_diff,
 )

@@ -2,7 +2,7 @@ import os
 
 import pytest
 
-from openai_service import generate_review_content
+from src.openai_service import generate_review_content
 
 
 @pytest.mark.integration

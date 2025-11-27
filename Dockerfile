@@ -9,4 +9,4 @@ COPY . .
 
 EXPOSE 9655
 
-CMD ["gunicorn", "--bind", "0.0.0.0:9655", "--timeout", "6000", "main:app"]
+CMD ["gunicorn", "--bind", "0.0.0.0:9655", "--timeout", "6000", "src.main:app"]
