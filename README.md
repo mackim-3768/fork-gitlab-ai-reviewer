@@ -153,7 +153,36 @@ LOG_LEVEL=INFO
 
 ENABLE_MERGE_REQUEST_REVIEW=true
 ENABLE_PUSH_REVIEW=true
+
+# (옵션) 통합 테스트용 GitLab 설정
+# GITLAB_TEST_PROJECT_ID=123
+# GITLAB_TEST_MERGE_REQUEST_IID=1
+# GITLAB_TEST_COMMIT_ID=abcdef1234567890
 ```
+
+### 테스트 환경(.env) 및 pytest
+
+- 루트 디렉터리의 `.env` 파일은 `tests/conftest.py` 에서 `python-dotenv` 로 자동 로드됩니다.
+- `tests/test_openai_service_env.py`, `tests/test_gitlab_client_env.py` 는 실제 OpenAI / GitLab API를 호출하는 **통합 테스트**이며, 다음 조건에서만 실행됩니다.
+  - `OPENAI_API_KEY` 가 설정되어 있어야 합니다.
+  - GitLab 통합 테스트의 경우:
+    - `GITLAB_URL`
+    - `GITLAB_ACCESS_TOKEN`
+    - `GITLAB_TEST_PROJECT_ID`
+    - `GITLAB_TEST_MERGE_REQUEST_IID`
+    - `GITLAB_TEST_COMMIT_ID`
+- 위 환경변수가 설정되지 않은 경우, 해당 테스트는 `pytest.skip` 으로 자동 건너뜁니다.
+
+테스트 실행 예시는 다음과 같습니다.
+
+- 전체 테스트 실행:
+  ```bash
+  python -m pytest
+  ```
+- 통합 테스트만 선택 실행:
+  ```bash
+  python -m pytest -m integration
+  ```
 
 ---
 
