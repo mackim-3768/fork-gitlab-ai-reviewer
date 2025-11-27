@@ -1,7 +1,9 @@
 import logging
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 import requests
+
+from .types import GitDiffChange, MergeRequestChangesResponse
 
 
 logger = logging.getLogger(__name__)
@@ -12,7 +14,7 @@ def get_merge_request_changes(
     access_token: str,
     project_id: int,
     merge_request_iid: int,
-) -> Dict[str, Any]:
+) -> MergeRequestChangesResponse:
     """GitLab에서 특정 MR의 변경 사항(changes)을 조회한다."""
 
     url = f"{api_base_url}/projects/{project_id}/merge_requests/{merge_request_iid}/changes"
@@ -57,7 +59,7 @@ def get_commit_diff(
     access_token: str,
     project_id: int,
     commit_id: str,
-):
+) -> List[GitDiffChange]:
     """GitLab에서 특정 커밋의 diff를 조회한다."""
 
     url = f"{api_base_url}/projects/{project_id}/repository/commits/{commit_id}/diff"

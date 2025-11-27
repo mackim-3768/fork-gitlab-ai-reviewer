@@ -9,6 +9,7 @@ from .gitlab_client import (
     post_commit_comment,
 )
 from .review_chain import get_review_chain
+from .types import MergeRequestChangesResponse
 
 
 logger = logging.getLogger(__name__)
@@ -50,7 +51,7 @@ def run_merge_request_review(task: MergeRequestReviewTask) -> None:
         task.merge_request_iid,
     )
 
-    mr_changes = get_merge_request_changes(
+    mr_changes: MergeRequestChangesResponse = get_merge_request_changes(
         task.gitlab_api_base_url,
         task.gitlab_access_token,
         task.project_id,

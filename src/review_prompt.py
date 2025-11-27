@@ -1,7 +1,9 @@
-from typing import Dict, List
+from typing import List
+
+from .types import ChatMessageDict, GitDiffChange
 
 
-def format_file_header(change: Dict) -> str:
+def format_file_header(change: GitDiffChange) -> str:
     """변경된 파일의 메타데이터(경로, 상태)를 기반으로 사람이 읽기 좋은 헤더를 생성한다."""
     old_path = change.get("old_path")
     new_path = change.get("new_path")
@@ -24,7 +26,7 @@ def format_file_header(change: Dict) -> str:
     return f"📝 **MODIFIED**: `{new_path}`"
 
 
-def generate_review_prompt(changes: List[Dict]) -> List[Dict]:
+def generate_review_prompt(changes: List[GitDiffChange]) -> List[ChatMessageDict]:
     """Git 변경 사항 리스트를 LLM 리뷰용 messages 포맷으로 변환한다."""
 
     # 1. Diff 데이터 전처리 (파일 상태 및 코드 블록 포맷팅)
@@ -68,7 +70,7 @@ def generate_review_prompt(changes: List[Dict]) -> List[Dict]:
     5.  **💡 Suggestions**: actionable improvements.
     """
 
-    messages: List[Dict] = [
+    messages: List[ChatMessageDict] = [
         {
             "role": "system",
             "content": system_instruction,

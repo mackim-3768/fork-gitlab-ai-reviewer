@@ -1,7 +1,7 @@
 import logging
 import os
 from enum import Enum
-from typing import Dict, List
+from typing import List
 
 from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
 from langchain_core.messages import BaseMessage
@@ -9,6 +9,8 @@ from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_openai import ChatOpenAI
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_ollama import ChatOllama
+
+from .types import ChatMessageDict
 
 
 logger = logging.getLogger(__name__)
@@ -53,7 +55,7 @@ def _get_llm_timeout_seconds() -> float:
         return 300.0
 
 
-def _to_langchain_messages(messages: List[Dict]) -> List[BaseMessage]:
+def _to_langchain_messages(messages: List[ChatMessageDict]) -> List[BaseMessage]:
     lc_messages: List[BaseMessage] = []
     for message in messages:
         role = message.get("role")
@@ -141,7 +143,7 @@ def _create_llm(model: str, temperature: float) -> BaseChatModel:
 
 
 def generate_review_content(
-    messages: List[Dict],
+    messages: List[ChatMessageDict],
 ) -> str:
     """주어진 messages를 기반으로 선택된 LLM provider에서 리뷰 텍스트를 생성한다.
 
