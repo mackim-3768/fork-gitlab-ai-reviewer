@@ -21,6 +21,14 @@ openai.api_version = os.environ.get("AZURE_OPENAI_API_VERSION")
 if openai.api_version != None:
     openai.api_type = "azure"
 
+
+def _get_bool_env(name: str, default: bool) -> bool:
+    value = os.environ.get(name)
+    if value is None:
+        return default
+    return value.strip().lower() in ("1", "true", "yes", "on")
+
+
 log_level_name = os.environ.get("LOG_LEVEL", "INFO").upper()
 log_level = getattr(logging, log_level_name, logging.INFO)
 logging.basicConfig(level=log_level)
@@ -32,6 +40,9 @@ if log_level == logging.INFO and log_level_name != "INFO":
         log_level_name,
     )
 
+enable_merge_request_review = _get_bool_env("ENABLE_MERGE_REQUEST_REVIEW", True)
+enable_push_review = _get_bool_env("ENABLE_PUSH_REVIEW", True)
+
 
 @app.route("/webhook", methods=["POST"])
 def webhook():
@@ -42,9 +53,12 @@ def webhook():
         return "Unauthorized", 403
 
     payload = request.json
-    logger.info("Received webhook: object_kind=%s", payload.get("object_kind"))
+    object_kind = payload.get("object_kind")
+    logger.info("Received webhook: object_kind=%s", object_kind)
 
-    if payload.get("object_kind") == "merge_request":
+    if object_kind == "merge_request":
+        if not enable_merge_request_review:
+            return "merge_request handling disabled", 200
         action = payload["object_attributes"]["action"]
         if action != "open":
             return "Not a  PR open", 200
@@ -122,7 +136,6 @@ def webhook():
             )
             answer += "\n\nError: " + str(e)
 
-        logger.debug("Generated merge_request review comment: %s", answer)
         comment_url = (
             f"{gitlab_api_base_url}/projects/{project_id}/merge_requests/{mr_id}/notes"
         )
@@ -136,7 +149,9 @@ def webhook():
             mr_id,
             comment_response.status_code,
         )
-    elif payload.get("object_kind") == "push":
+    elif object_kind == "push":
+        if not enable_push_review:
+            return "push handling disabled", 200
         project_id = payload["project_id"]
         commit_id = payload["after"]
         logger.info(
@@ -187,8 +202,6 @@ def webhook():
                 ),
             },
         ]
-
-        logger.debug("OpenAI messages for push review: %s", messages)
         try:
             completions = openai.ChatCompletion.create(
                 deployment_id=os.environ.get("OPENAI_API_MODEL"),
@@ -212,7 +225,6 @@ def webhook():
             )
             answer += "\n\nError: " + str(e)
 
-        logger.debug("Generated commit review comment: %s", answer)
         comment_url = f"{gitlab_api_base_url}/projects/{project_id}/repository/commits/{commit_id}/comments"
         comment_payload = {"note": answer}
         comment_response = requests.post(
@@ -224,6 +236,8 @@ def webhook():
             commit_id,
             comment_response.status_code,
         )
+    else:
+        logger.info("Ignoring unsupported object_kind: %s", object_kind)
 
     return "OK", 200
 

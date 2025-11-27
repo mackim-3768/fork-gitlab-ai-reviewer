@@ -157,6 +157,14 @@ pip install -r requirements.txt
   애플리케이션 전역 로그 레벨을 설정합니다. 설정하지 않으면 `INFO`가 기본값입니다.  
   사용 가능한 값 예: `DEBUG`, `INFO`, `WARNING`, `ERROR`, `CRITICAL`.
 
+- `ENABLE_MERGE_REQUEST_REVIEW`  
+  `merge_request` 이벤트를 처리할지 여부를 제어합니다. 설정하지 않으면 기본값은 `true`입니다.  
+  값이 `1`, `true`, `yes`, `on`(대소문자 무시) 중 하나이면 활성화되고, 그 외 값은 비활성화로 간주됩니다.
+
+- `ENABLE_PUSH_REVIEW`  
+  `push` 이벤트(커밋) 를 처리할지 여부를 제어합니다. 설정하지 않으면 기본값은 `true`입니다.  
+  값이 `1`, `true`, `yes`, `on`(대소문자 무시) 중 하나이면 활성화되고, 그 외 값은 비활성화로 간주됩니다.
+
 ### 선택 환경 변수 (Azure OpenAI 사용 시)
 
 - `AZURE_OPENAI_API_BASE`  
@@ -187,6 +195,9 @@ GITLAB_URL=https://gitlab.com
 EXPECTED_GITLAB_TOKEN=your-webhook-secret-token
 
 LOG_LEVEL=INFO
+
+ENABLE_MERGE_REQUEST_REVIEW=true
+ENABLE_PUSH_REVIEW=true
 
 AZURE_OPENAI_API_BASE= # optional
 AZURE_OPENAI_API_VERSION= # optional
