@@ -225,7 +225,7 @@ def webhook():
 
     payload = request.json
     object_kind = payload.get("object_kind")
-    logger.info("Received webhook: object_kind=%s", object_kind)
+    logger.debug("Received webhook: object_kind=%s", object_kind)
 
     if object_kind == "merge_request":
         return handle_merge_request_event(payload)
@@ -233,7 +233,7 @@ def webhook():
     if object_kind == "push":
         return handle_push_event(payload)
 
-    logger.info("Ignoring unsupported object_kind: %s", object_kind)
+    logger.debug("Ignoring unsupported object_kind: %s", object_kind)
 
     return "OK", 200
 

@@ -92,7 +92,23 @@ Python 의존성은 `requirements.txt`에 정의되어 있습니다.
 
 이 애플리케이션은 모든 설정을 **환경 변수**로 받습니다. 루트 디렉터리에 `.env` 파일을 두고 관리하거나, 쉘에서 직접 export 해도 됩니다.
 
-### 필수 환경 변수
+### 빠른 시작: 최소 .env 예시
+
+가장 빠르게 시작하려면 아래와 같이 **필수 값만** 설정해도 동작합니다.
+
+```env
+OPENAI_API_KEY=your-openai-api-key
+OPENAI_API_MODEL=gpt-5-mini
+
+GITLAB_ACCESS_TOKEN=your-gitlab-personal-access-token
+GITLAB_URL=https://gitlab.com
+
+GITLAB_WEBHOOK_SECRET_TOKEN=your-webhook-secret-token
+```
+
+아래 섹션에서는 필수/선택 환경 변수를 포함한 **세부 설정**을 설명합니다.
+
+### 세부 설정: 필수 환경 변수
 
 - `OPENAI_API_KEY`  
   OpenAI API Key
@@ -126,7 +142,7 @@ Python 의존성은 `requirements.txt`에 정의되어 있습니다.
   openssl rand -base64 32
   ```
 
-### 선택 환경 변수 (공통)
+### 세부 설정: 선택 환경 변수 (공통)
 
 - `LOG_LEVEL`  
   애플리케이션 전역 로그 레벨을 설정합니다. 설정하지 않으면 `INFO`가 기본값입니다.  
@@ -140,32 +156,12 @@ Python 의존성은 `requirements.txt`에 정의되어 있습니다.
   `push` 이벤트(커밋) 를 처리할지 여부를 제어합니다. 설정하지 않으면 기본값은 `true`입니다.  
   값이 `1`, `true`, `yes`, `on`(대소문자 무시) 중 하나이면 활성화되고, 그 외 값은 비활성화로 간주됩니다.
 
-### `.env` 예시
+- `REVIEW_MAX_REQUESTS_PER_MINUTE`, `REVIEW_WORKER_CONCURRENCY`, `REVIEW_MAX_PENDING_JOBS`  
+  비동기 리뷰 큐 및 레이트 리밋 동작을 제어하는 고급 설정입니다. 설정하지 않으면 각각 `2`, `1`, `100` 이 기본값으로 사용됩니다.
 
-```env
-OPENAI_API_KEY=your-openai-api-key
-OPENAI_API_MODEL=gpt-5-mini
+### `.env` 전체 예시 (세부 설정 포함)
 
-GITLAB_ACCESS_TOKEN=your-gitlab-personal-access-token
-GITLAB_URL=https://gitlab.com
-
-GITLAB_WEBHOOK_SECRET_TOKEN=your-webhook-secret-token
-
-LOG_LEVEL=INFO
-
-ENABLE_MERGE_REQUEST_REVIEW=true
-ENABLE_PUSH_REVIEW=true
-
-# (옵션) 비동기 리뷰 큐 및 레이트 리밋 설정
-REVIEW_MAX_REQUESTS_PER_MINUTE=2 # 분당 시작 가능한 리뷰 작업 수 (기본값: 2)
-REVIEW_WORKER_CONCURRENCY=1 # 리뷰 작업을 처리할 워커 스레드 개수 (기본값: 1)
-REVIEW_MAX_PENDING_JOBS=100 # 경고용 대기열 길이 soft limit (기본값: 100)
-
-# (옵션) 통합 테스트용 GitLab 설정
-# GITLAB_TEST_PROJECT_ID=123
-# GITLAB_TEST_MERGE_REQUEST_IID=1
-# GITLAB_TEST_COMMIT_ID=abcdef1234567890
-```
+[.env.sample](./.env.sample)
 
 ### 테스트 환경(.env) 및 pytest
 

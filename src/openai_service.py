@@ -58,7 +58,7 @@ def generate_review_content(
 
     # gpt-5 계열 모델은 temperature 기본값(1)만 허용하므로, 명시적으로 넘기지 않는다.
     if temperature is not None:
-        if model.startswith("gpt-5"):
+        if model.startswith("gpt-5") and temperature != 1:
             logger.info(
                 "Model %s only supports default temperature; ignoring explicit temperature=%s",
                 model,

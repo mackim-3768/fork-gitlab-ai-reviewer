@@ -82,9 +82,6 @@ AI_PROGRESS_MESSAGE = (
 
 
 def handle_merge_request_event(payload):
-    if not enable_merge_request_review:
-        return "merge_request handling disabled", 200
-
     action = payload["object_attributes"]["action"]
     if action != "open":
         return "Not a  PR open", 200
@@ -133,9 +130,6 @@ def handle_merge_request_event(payload):
 
 
 def handle_push_event(payload):
-    if not enable_push_review:
-        return "push handling disabled", 200
-
     project_id = payload["project_id"]
     commit_id = payload["after"]
     logger.info(
@@ -191,9 +185,19 @@ def webhook():
     logger.info("Received webhook: object_kind=%s", object_kind)
 
     if object_kind == "merge_request":
+        if not enable_merge_request_review:
+            logger.info(
+                "merge_request handling disabled by ENABLE_MERGE_REQUEST_REVIEW",
+            )
+            return "merge_request handling disabled", 200
         return handle_merge_request_event(payload)
 
     if object_kind == "push":
+        if not enable_push_review:
+            logger.info(
+                "push handling disabled by ENABLE_PUSH_REVIEW",
+            )
+            return "push handling disabled", 200
         return handle_push_event(payload)
 
     logger.info("Ignoring unsupported object_kind: %s", object_kind)
