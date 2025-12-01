@@ -27,3 +27,15 @@ class ChatMessageDict(TypedDict):
 
     role: str
     content: str
+
+
+class LLMReviewResult(TypedDict, total=False):
+    """LLM 리뷰 결과 텍스트와 호출 메타데이터 구조."""
+
+    content: str
+    provider: str
+    model: str
+    elapsed_seconds: float
+    input_tokens: NotRequired[int]
+    output_tokens: NotRequired[int]
+    total_tokens: NotRequired[int]

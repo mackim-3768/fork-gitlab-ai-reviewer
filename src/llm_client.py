@@ -1,6 +1,7 @@
 import logging
 import os
 from enum import Enum
+from time import perf_counter
 from typing import List
 
 from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
@@ -10,7 +11,7 @@ from langchain_openai import ChatOpenAI
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_ollama import ChatOllama
 
-from .types import ChatMessageDict
+from .types import ChatMessageDict, LLMReviewResult
 
 
 logger = logging.getLogger(__name__)
@@ -142,20 +143,83 @@ def _create_llm(model: str, temperature: float) -> BaseChatModel:
     raise ValueError(f"Unsupported LLM provider: {provider}")
 
 
-def generate_review_content(
+def generate_review_content_with_stats(
     messages: List[ChatMessageDict],
-) -> str:
-    """주어진 messages를 기반으로 선택된 LLM provider에서 리뷰 텍스트를 생성한다.
-
-    messages 형식은 OpenAI ChatCompletion API 스타일({"role", "content"})을 따른다.
-    내부에서는 LangChain 메시지 타입으로 변환한 뒤, provider별 Chat 모델을 호출한다.
-    """
+) -> LLMReviewResult:
+    """주어진 messages를 기반으로 LLM을 호출하고, 결과와 메타데이터를 함께 반환한다."""
 
     lc_messages = _to_langchain_messages(messages)
 
     # temperature는 리뷰 결과의 일관성을 위해 1.0으로 고정한다.
     model = _get_llm_model()
+    provider = _get_llm_provider()
     llm = _create_llm(model=model, temperature=1.0)
 
+    started_at = perf_counter()
     response = llm.invoke(lc_messages)
-    return response.content.strip()
+    elapsed = perf_counter() - started_at
+
+    content = response.content.strip()
+
+    result: LLMReviewResult = {
+        "content": content,
+        "provider": provider.value,
+        "model": model,
+        "elapsed_seconds": elapsed,
+    }
+
+    # 토큰 사용량은 provider/라이브러리마다 제공 여부가 다르므로, 존재하는 경우에만 추출한다.
+    input_tokens = None
+    output_tokens = None
+    total_tokens = None
+
+    usage_metadata = getattr(response, "usage_metadata", None)
+    if isinstance(usage_metadata, dict):
+        input_tokens = usage_metadata.get("input_tokens")
+        output_tokens = usage_metadata.get("output_tokens")
+        total_tokens = usage_metadata.get("total_tokens")
+    else:
+        response_metadata = getattr(response, "response_metadata", None)
+        if isinstance(response_metadata, dict):
+            token_usage = response_metadata.get("token_usage") or response_metadata.get(
+                "usage"
+            )
+            if isinstance(token_usage, dict):
+                input_tokens = token_usage.get("prompt_tokens") or token_usage.get(
+                    "input_tokens"
+                )
+                output_tokens = token_usage.get("completion_tokens") or token_usage.get(
+                    "output_tokens"
+                )
+                total_tokens = token_usage.get("total_tokens")
+
+    if input_tokens is not None:
+        result["input_tokens"] = int(input_tokens)
+    if output_tokens is not None:
+        result["output_tokens"] = int(output_tokens)
+    if total_tokens is not None:
+        result["total_tokens"] = int(total_tokens)
+
+    return result
+
+
+def generate_review_content(
+    messages: List[ChatMessageDict],
+) -> str:
+    """기존 API를 유지하기 위한 래퍼. 리뷰 텍스트 문자열만 반환한다."""
+
+    result = generate_review_content_with_stats(messages)
+    return result["content"]
+
+
+def get_llm_provider_name() -> str:
+    try:
+        provider = _get_llm_provider()
+        return provider.value
+    except ValueError as exc:
+        logger.error("Failed to resolve LLM provider: %s", exc)
+        return "unknown"
+
+
+def get_llm_model_name() -> str:
+    return _get_llm_model()
