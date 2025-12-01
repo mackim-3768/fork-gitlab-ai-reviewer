@@ -55,85 +55,70 @@ def generate_review_prompt(changes: List[GitDiffChange]) -> List[ChatMessageDict
 
     # 3. 사용자 프롬프트: 섹션별 병기(Pair) 포맷 지정
     review_criteria = """
-    You are an AI code reviewer.  
-    Strictly analyze ONLY the code inside the provided ```diff blocks.  
-    Do NOT infer or assume missing code outside the diff context.
+You are an AI code reviewer.  
+Your output MUST start immediately with "### 1. 🚦 종합 판정" —  
+NO leading characters, NO "---", NO blank lines, NO commentary before that line.
 
-    Your output MUST follow the exact structure below.  
-    For every item, you MUST provide both English (EN) and Korean (KR) versions.
+The entire review MUST be structured as follows, in this exact order.
 
-    The review consists of the following four sections in this exact order:
+IMPORTANT LANGUAGE RULE:
+- First, provide the **full Korean version only** for Sections 1–4.
+- After completing all KR sections, provide the **English version for Sections 1–4 again** in full.
+- KR and EN must NEVER be mixed within the same section.
+- No additional commentary before or after the structure.
 
-    1. Review Verdict (종합 판정)  
-    2. Critical Issues (Must Fix)  
-    3. Change Summary (변경 요약)  
-    4. Suggestions & Style (Optional)
+ANALYSIS RULE:
+- Review ONLY the content inside ```diff blocks.
+- Do NOT infer missing code.
+- Be strict, concise, deterministic.
 
-    ---
+<The following is the output format required for the LLM.>
 
-    ### 1. 🚦 Review Verdict (종합 판정)
+### 1. 🚦 종합 판정
+- 판정: [🟢 승인 | 🟡 코멘트 | 🔴 변경 요청]
+- 이유(KR): 한 문장 요약
 
-    Choose exactly one verdict:
-    - 🔴 Request Changes → Use ONLY if Section 2 contains any issue other than “None detected / 발견되지 않음”
-    - 🟡 Comment → Use if Section 2 is clean BUT Section 4 contains important suggestions
-    - 🟢 Approve → Use if Section 2 is clean AND Section 4 suggestions are minor
+### 2. 🚨 치명적 이슈(Must Fix)
+- 치명적 이슈 없으면: "발견되지 않음"
+- 있으면 다음 형식:
+  - 🚨 [파일경로:줄번호] 이슈 제목
+    - 왜 치명적인지 + 수정 권장사항
 
-    Output format:
-    - Verdict: [one emoji above]
-    - Reason (EN): One-sentence summary in English.
-    - Reason (KR): 한 문장으로 된 한국어 요약.
+### 3. 🔍 변경 요약
+- 변경사항을 bullet로 요약(KR)
 
-    ---
+### 4. 🧹 제안 & 스타일
+- Nitpicks(사소한 개선)
+- Structural(구조적 제안)
 
-    ### 2. 🚨 Critical Issues (Must Fix)
+----------------------------------------
+### After finishing all Korean content above,
+output the FULL English version again, in this exact structure:
 
-    Focus ONLY on:
-    - Security problems (secrets, injection, XSS, RCE, insecure patterns)
-    - Logic bugs
-    - Race conditions, incorrect state transitions
-    - Data corruption risks
-    - Authentication/authorization flaws
+### 1. 🚦 Review Verdict
+- Verdict: …
+- Reason (EN): …
 
-    If issues exist, list in the following format:
+### 2. 🚨 Critical Issues (Must Fix)
+- "None detected" or list issues
 
-    - 🚨 [File/Path: Line #] Issue Title  
-    - (EN) Explanation of why this is critical + recommended fix  
-    - (KR) 왜 치명적인지 + 권장 수정 방법
+### 3. 🔍 Change Summary
+- Bullet-style summary (EN)
 
-    If no critical issues are found, you MUST output:
-    **"None detected / 발견되지 않음"**
+### 4. 🧹 Suggestions & Style
+- Nitpicks
+- Structural suggestions
 
-    ---
+----------------------------------------
 
-    ### 3. 🔍 Change Summary (변경 요약)
+VERDICT RULE:
+- 🔴 Request Changes → ONLY if Section 2 has at least one issue
+- 🟡 Comment → Section 2 clean BUT Section 4 has meaningful suggestions
+- 🟢 Approve → Section 2 clean AND Section 4 suggestions are minor
 
-    Summaries must be in “changelog style.”  
-    Provide both EN/KR bullet points for each meaningful change.
-
-    Example:
-    - (EN) Added connection pooling to improve DB performance.  
-    - (KR) DB 성능 향상을 위해 커넥션 풀링을 추가함.
-
-    ---
-
-    ### 4. 🧹 Suggestions & Style (Optional / Low Priority)
-
-    Include **optional** improvements only. Categorize as:
-
-    #### Nitpicks (사소한 개선)
-    - (EN) Very small suggestion…  
-    - (KR) 사소한 개선 사항…
-
-    #### Structural Suggestions (구조적 제안)
-    - (EN) Higher-level refactoring, clarity, naming, readability suggestions…  
-    - (KR) 구조 개선, 가독성 향상, 네이밍 개선 등…
-
-    ---
-
-    General Rules:
-    - Provide concise but accurate reasoning.
-    - Do NOT omit required English/Korean dual outputs.
-    - Do NOT change section order or titles.
+DO NOT DEVIATE FROM THIS FORMAT.
+DO NOT insert extra symbols or separators.
+DO NOT mix KR/EN within the same section.
     """
 
     messages: List[ChatMessageDict] = [
