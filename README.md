@@ -107,6 +107,7 @@ OLLAMA_BASE_URL=http://localhost:11434 # provider=ollama 인 경우 필요 [defa
 GITLAB_ACCESS_TOKEN=your-gitlab-personal-access-token
 GITLAB_URL=https://gitlab.com
 GITLAB_WEBHOOK_SECRET_TOKEN=your-webhook-secret-token
+REVIEW_SYSTEM_PROMPT= # (선택) 코드 리뷰용 시스템 프롬프트를 완전히 커스터마이징할 때 사용. 비워두면 기본 프롬프트 사용
 ```
 
 ### 세부 설정 포함 `.env` 전체 예시
