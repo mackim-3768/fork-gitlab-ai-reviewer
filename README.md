@@ -1,7 +1,7 @@
 # Gitlab AI Code Reviewer
 
 Gitlab AI Code Reviewer는 GitLab 저장소의 코드 변경 사항을 **자동으로 리뷰**해 주는 Flask 기반 웹 애플리케이션입니다.
-GitLab Webhook(머지 요청 및 푸시 이벤트)을 받아 diff를 조회하고, 선택한 LLM(OpenAI, Gemini, Ollama 등)을 사용해 코드 리뷰 코멘트를 생성한 뒤, GitLab에 **마크다운 형식의 댓글**로 남깁니다.
+GitLab Webhook(머지 요청 및 푸시 이벤트)을 받아 diff를 조회하고, 선택한 LLM(OpenAI, Gemini, Ollama, OpenRouter 등)을 사용해 코드 리뷰 코멘트를 생성한 뒤, GitLab에 **마크다운 형식의 댓글**로 남깁니다.
 
 ![sample](./docs/images/sample.png)
 
@@ -12,7 +12,7 @@ GitLab Webhook(머지 요청 및 푸시 이벤트)을 받아 diff를 조회하�
 - GitLab에서 발생하는 다음 이벤트를 처리합니다.
   - 머지 요청 이벤트(`object_kind = "merge_request"`, action: `open`인 경우만 처리)
   - 푸시 이벤트(`object_kind = "push"`)
-- 각 이벤트에 대해 GitLab API로 diff를 조회한 뒤, LangChain LLM 클라이언트를 통해 선택한 provider(OpenAI, Gemini, Ollama 등)로 리뷰를 생성합니다.
+- 각 이벤트에 대해 GitLab API로 diff를 조회한 뒤, LangChain LLM 클라이언트를 통해 선택한 provider(OpenAI, Gemini, Ollama, OpenRouter 등)로 리뷰를 생성합니다.
 - 생성된 리뷰를 다음 위치에 댓글로 남깁니다.
   - 머지 요청: MR Note
   - 커밋: Commit Comment
@@ -31,7 +31,7 @@ GitLab Webhook은 이 엔드포인트로 이벤트를 전송해야 합니다.
 - 코드 가독성, 구조, 복잡도, 잠재적 버그 및 보안 이슈에 대한 피드백
 - GitLab에서 바로 읽기 좋은 **마크다운 형식**의 코멘트 생성
 - 머지 요청과 푸시(커밋)에 모두 대응
-- LangChain 기반 LLM 추상화로 **OpenAI, Google Gemini, Ollama** 중 원하는 provider 선택 가능
+- LangChain 기반 LLM 추상화로 **OpenAI, Google Gemini, Ollama, OpenRouter** 중 원하는 provider 선택 가능
 
 ---
 
@@ -48,7 +48,7 @@ GitLab Webhook은 이 엔드포인트로 이벤트를 전송해야 합니다.
    ```
 
 4. 응답에서 `changes[].diff`를 추출해 하나의 문자열로 합침
-5. 리뷰 프롬프트(질문 목록 포함)를 구성하고 LangChain LLM 클라이언트를 통해 선택한 provider(OpenAI, Gemini, Ollama 등)로 리뷰를 생성
+5. 리뷰 프롬프트(질문 목록 포함)를 구성하고 LangChain LLM 클라이언트를 통해 선택한 provider(OpenAI, Gemini, Ollama, OpenRouter 등)로 리뷰를 생성
 6. 생성된 리뷰를 아래 API로 MR 댓글로 등록
 
    ```text
@@ -66,7 +66,7 @@ GitLab Webhook은 이 엔드포인트로 이벤트를 전송해야 합니다.
    ```
 
 4. diff 목록을 문자열로 합쳐 프롬프트에 포함
-5. LangChain LLM 클라이언트를 통해 선택한 provider(OpenAI, Gemini, Ollama 등)로 리뷰 생성
+5. LangChain LLM 클라이언트를 통해 선택한 provider(OpenAI, Gemini, Ollama, OpenRouter 등)로 리뷰 생성
 6. 생성된 리뷰를 아래 API로 커밋 댓글로 등록
 
    ```text
@@ -81,7 +81,8 @@ GitLab Webhook은 이 엔드포인트로 이벤트를 전송해야 합니다.
 
 - Python **3.11 이상** (프로젝트 `pyproject.toml` 및 uv 기준)
 - GitLab 프로젝트 1개 이상 (Webhook 설정 권한 필요)
-- OpenAI API Key (기본 provider가 openai일 때 필요)
+- OpenAI API Key (LLM_PROVIDER=openai 인 경우 필요)
+- OpenRouter API Key (LLM_PROVIDER=openrouter 인 경우 필요)
 - GitLab Personal Access Token (API 권한 포함)
 - Docker 및 docker-compose (선택, 컨테이너 실행용)
 
@@ -96,13 +97,15 @@ Python 의존성은 `pyproject.toml`로 관리되며, 로컬 개발 시 **uv** �
 ### 빠른 시작 .env 예시
 
 ```env
-LLM_PROVIDER=openai # LLM provider [openai (default) / gemini / ollama]
+LLM_PROVIDER=openai # LLM provider [openai (default) / gemini / ollama / openrouter]
 LLM_MODEL=gpt-5-mini # LLM 모델명 [gpt-5-mini (default) , gemini-2.5-pro, llama3, ...]
 LLM_TIMEOUT_SECONDS=300 # LLM API timeout seconds [default: 300]
 
 OPENAI_API_KEY=your-openai-api-key # provider=openai 인 경우 필요
 GOOGLE_API_KEY=your-google-api-key # provider=gemini 인 경우 필요
 OLLAMA_BASE_URL=http://localhost:11434 # provider=ollama 인 경우 필요 [default: http://localhost:11434]
+OPENROUTER_API_KEY=your-openrouter-api-key # provider=openrouter 인 경우 필요
+OPENROUTER_BASE_URL=https://openrouter.ai/api/v1 # provider=openrouter 인 경우 선택 (기본값: https://openrouter.ai/api/v1)
 
 GITLAB_ACCESS_TOKEN=your-gitlab-personal-access-token
 GITLAB_URL=https://gitlab.com
@@ -264,7 +267,7 @@ GitLab 프로젝트에서 Webhook을 아래와 같이 설정합니다.
 - **LLM 관련 에러**
 
   - `LLM_PROVIDER`, `LLM_MODEL`, `LLM_TIMEOUT_SECONDS` 가 올바른지 확인합니다.
-  - `LLM_PROVIDER`에 따라 필요한 API 키가 설정되어 있는지 확인합니다. 예) `LLM_PROVIDER=openai` 인 경우 `OPENAI_API_KEY` 가 필요합니다.
+  - `LLM_PROVIDER`에 따라 필요한 API 키가 설정되어 있는지 확인합니다. 예) `LLM_PROVIDER=openai` 인 경우 `OPENAI_API_KEY`, `LLM_PROVIDER=gemini` 인 경우 `GOOGLE_API_KEY`, `LLM_PROVIDER=openrouter` 인 경우 `OPENROUTER_API_KEY` 가 필요합니다.
 
 ---
 

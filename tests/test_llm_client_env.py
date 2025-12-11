@@ -1,29 +1,8 @@
-import os
-from typing import Any, List
+from typing import Any
 
-import logging
 import pytest
 
 from src import llm_client
-from src.llm_client import generate_review_content
-from src.types import ChatMessageDict
-
-logger = logging.getLogger(__name__)
-
-
-def _make_dummy_messages() -> List[ChatMessageDict]:
-    """LLM 호출 경로를 검증하기 위한 최소 messages 세트."""
-
-    return [
-        {
-            "role": "system",
-            "content": "You are a helpful code review assistant.",
-        },
-        {
-            "role": "user",
-            "content": "Say hello in one short sentence.",
-        },
-    ]
 
 
 class _DummyResponse:
@@ -37,132 +16,117 @@ class _DummyChatModel:
     last_init_kwargs: dict[str, Any] | None = None
     last_invoked_messages: list[Any] | None = None
 
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
+    def __init__(self, *args: Any, **kwargs: Any) -> None:  # noqa: D401, ANN401
         _DummyChatModel.last_init_kwargs = kwargs
 
-    def invoke(self, messages: list[Any]) -> _DummyResponse:
+    def invoke(self, messages: list[Any]) -> _DummyResponse:  # noqa: D401, ANN401
         _DummyChatModel.last_invoked_messages = messages
         return _DummyResponse("dummy-response")
 
 
-def test_generate_review_content_openai_uses_env_and_invokes_llm(
+def test_create_llm_openai_uses_chatopenai(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """OPENAI provider 설정 시 env를 이용해 ChatOpenAI를 생성하고 invoke까지 도달하는지 검증한다."""
+    """OPENAI provider 설정 시 env를 이용해 ChatOpenAI 기반 LLM 클라이언트를 생성하는지 검증한다."""
+
+    _DummyChatModel.last_init_kwargs = None
+    _DummyChatModel.last_invoked_messages = None
 
     monkeypatch.setenv("LLM_PROVIDER", "openai")
-    monkeypatch.setenv("LLM_MODEL", "gpt-5-mini")
     monkeypatch.setenv("OPENAI_API_KEY", "test-key")
     monkeypatch.delenv("LLM_TIMEOUT_SECONDS", raising=False)
 
     monkeypatch.setattr(llm_client, "ChatOpenAI", _DummyChatModel)
 
-    result = generate_review_content(_make_dummy_messages())
+    llm = llm_client._create_llm(model="gpt-5-mini", temperature=0.5)
 
-    assert result == "dummy-response"
+    assert isinstance(llm, _DummyChatModel)
     assert _DummyChatModel.last_init_kwargs is not None
-    assert _DummyChatModel.last_invoked_messages is not None
     assert _DummyChatModel.last_init_kwargs["model"] == "gpt-5-mini"
+    assert _DummyChatModel.last_init_kwargs["api_key"] == "test-key"
+    assert "base_url" not in _DummyChatModel.last_init_kwargs
 
 
-def test_generate_review_content_gemini_uses_env_and_invokes_llm(
+def test_create_llm_gemini_uses_chatgoogle(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """GEMINI provider 설정 시 env를 이용해 ChatGoogleGenerativeAI를 생성하는지 검증한다."""
+    """GEMINI provider 설정 시 env를 이용해 ChatGoogleGenerativeAI 기반 LLM 클라이언트를 생성하는지 검증한다."""
+
+    _DummyChatModel.last_init_kwargs = None
+    _DummyChatModel.last_invoked_messages = None
 
     monkeypatch.setenv("LLM_PROVIDER", "gemini")
-    monkeypatch.setenv("LLM_MODEL", "gemini-1.5-flash")
     monkeypatch.setenv("GOOGLE_API_KEY", "test-key")
     monkeypatch.delenv("LLM_TIMEOUT_SECONDS", raising=False)
 
     monkeypatch.setattr(llm_client, "ChatGoogleGenerativeAI", _DummyChatModel)
 
-    result = generate_review_content(_make_dummy_messages())
+    llm = llm_client._create_llm(model="gemini-1.5-flash", temperature=0.3)
 
-    assert result == "dummy-response"
+    assert isinstance(llm, _DummyChatModel)
     assert _DummyChatModel.last_init_kwargs is not None
-    assert _DummyChatModel.last_invoked_messages is not None
     assert _DummyChatModel.last_init_kwargs["model"] == "gemini-1.5-flash"
+    assert _DummyChatModel.last_init_kwargs["api_key"] == "test-key"
 
 
-def test_generate_review_content_ollama_uses_env_and_invokes_llm(
+def test_create_llm_ollama_uses_chatollama(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """OLLAMA provider 설정 시 env를 이용해 ChatOllama를 생성하는지 검증한다."""
+    """OLLAMA provider 설정 시 env를 이용해 ChatOllama 기반 LLM 클라이언트를 생성하는지 검증한다."""
+
+    _DummyChatModel.last_init_kwargs = None
+    _DummyChatModel.last_invoked_messages = None
 
     monkeypatch.setenv("LLM_PROVIDER", "ollama")
-    monkeypatch.setenv("LLM_MODEL", "llama2")
     monkeypatch.setenv("OLLAMA_BASE_URL", "http://localhost:11434")
     monkeypatch.delenv("LLM_TIMEOUT_SECONDS", raising=False)
 
     monkeypatch.setattr(llm_client, "ChatOllama", _DummyChatModel)
 
-    result = generate_review_content(_make_dummy_messages())
+    llm = llm_client._create_llm(model="llama2", temperature=0.7)
 
-    assert result == "dummy-response"
+    assert isinstance(llm, _DummyChatModel)
     assert _DummyChatModel.last_init_kwargs is not None
-    assert _DummyChatModel.last_invoked_messages is not None
     assert _DummyChatModel.last_init_kwargs["model"] == "llama2"
+    assert _DummyChatModel.last_init_kwargs["base_url"] == "http://localhost:11434"
+    assert "request_timeout" in _DummyChatModel.last_init_kwargs
 
 
-def test_generate_review_content_invalid_provider_raises(
+def test_create_llm_openrouter_uses_chatopenai_with_openrouter_base(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """OPENROUTER provider 설정 시 env를 이용해 ChatOpenAI(OpenRouter endpoint) 기반 LLM 클라이언트를 생성하는지 검증한다."""
+
+    _DummyChatModel.last_init_kwargs = None
+    _DummyChatModel.last_invoked_messages = None
+
+    monkeypatch.setenv("LLM_PROVIDER", "openrouter")
+    monkeypatch.setenv("OPENROUTER_API_KEY", "test-key")
+    monkeypatch.delenv("LLM_TIMEOUT_SECONDS", raising=False)
+    monkeypatch.delenv("OPENROUTER_BASE_URL", raising=False)
+
+    monkeypatch.setattr(llm_client, "ChatOpenAI", _DummyChatModel)
+
+    llm = llm_client._create_llm(
+        model="openrouter-test-model",
+        temperature=0.9,
+    )
+
+    assert isinstance(llm, _DummyChatModel)
+    assert _DummyChatModel.last_init_kwargs is not None
+    assert _DummyChatModel.last_init_kwargs["model"] == "openrouter-test-model"
+    assert _DummyChatModel.last_init_kwargs["api_key"] == "test-key"
+    assert (
+        _DummyChatModel.last_init_kwargs["base_url"] == "https://openrouter.ai/api/v1"
+    )
+
+
+def test_create_llm_invalid_provider_raises(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """지원하지 않는 LLM_PROVIDER 값이 설정된 경우 예외를 발생시키는지 검증한다."""
 
     monkeypatch.setenv("LLM_PROVIDER", "unknown-provider")
-    monkeypatch.setenv("LLM_MODEL", "dummy-model")
-    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
 
     with pytest.raises(ValueError):
-        generate_review_content(_make_dummy_messages())
-
-
-def _require_env(name: str) -> str:
-    """실제 외부 LLM 호출이 필요한 통합 테스트에서 필수 env가 없으면 테스트를 건너뛴다."""
-
-    value = os.getenv(name)
-    if not value:
-        pytest.skip(f"{name} is not set; skipping LLM integration tests.")
-    return value
-
-
-@pytest.mark.integration
-def test_generate_review_content_with_real_llm(monkeypatch: pytest.MonkeyPatch) -> None:
-    """실제 LLM provider가 설정된 경우, env 기반으로 LLM을 호출하는 통합 테스트.
-
-    다음 환경변수가 설정된 경우에만 실행된다.
-    - LLM_PROVIDER (openai | gemini | ollama)
-    - LLM_MODEL (provider에 맞는 유효한 모델명)
-    그리고 provider별로 필요한 키가 추가로 필요하다.
-    - OPENAI_API_KEY (LLM_PROVIDER=openai)
-    - GOOGLE_API_KEY (LLM_PROVIDER=gemini)
-    - OLLAMA_BASE_URL (LLM_PROVIDER=ollama일 때는 기본값 사용 가능)
-    """
-
-    provider = os.getenv("LLM_PROVIDER")
-    if not provider:
-        pytest.skip("LLM_PROVIDER is not set; skipping LLM integration tests.")
-
-    provider = provider.strip().lower()
-
-    # provider별 필수 env 검증
-    if provider == "openai":
-        _require_env("OPENAI_API_KEY")
-    elif provider == "gemini":
-        _require_env("GOOGLE_API_KEY")
-    elif provider == "ollama":
-        # OLLAMA는 로컬 기본 URL로도 동작할 수 있으므로 필수 키는 없다.
-        pass
-    else:
-        pytest.skip(f"Unsupported LLM_PROVIDER for integration test: {provider}")
-
-    model = _require_env("LLM_MODEL")
-    monkeypatch.setenv("LLM_MODEL", model)
-
-    messages = _make_dummy_messages()
-
-    result = generate_review_content(messages)
-    logger.info("Generated review content: %s", result)
-    assert isinstance(result, str)
-    assert result.strip() != ""
+        llm_client._create_llm(model="dummy-model", temperature=0.5)

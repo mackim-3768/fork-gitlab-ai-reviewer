@@ -21,6 +21,7 @@ class LLMProvider(str, Enum):
     OPENAI = "openai"
     GEMINI = "gemini"
     OLLAMA = "ollama"
+    OPENROUTER = "openrouter"
 
 
 def _get_llm_provider() -> LLMProvider:
@@ -127,6 +128,25 @@ def _create_ollama_llm(model: str, temperature: float) -> ChatOllama:
     )
 
 
+def _create_openrouter_llm(model: str, temperature: float) -> ChatOpenAI:
+    timeout = _get_llm_timeout_seconds()
+    api_key = os.environ.get("OPENROUTER_API_KEY")
+    if not api_key:
+        raise ValueError(
+            "OPENROUTER_API_KEY is not set (required when LLM_PROVIDER=openrouter)",
+        )
+
+    base_url = os.environ.get("OPENROUTER_BASE_URL") or "https://openrouter.ai/api/v1"
+
+    return ChatOpenAI(
+        model=model,
+        api_key=api_key,
+        temperature=temperature,
+        timeout=timeout,
+        base_url=base_url,
+    )
+
+
 def _create_llm(model: str, temperature: float) -> BaseChatModel:
     """환경 변수 기반 provider 설정에 따라 적절한 LangChain Chat 모델을 생성한다."""
 
@@ -137,6 +157,8 @@ def _create_llm(model: str, temperature: float) -> BaseChatModel:
         return _create_openai_llm(model=model, temperature=temperature)
     if provider is LLMProvider.GEMINI:
         return _create_gemini_llm(model=model, temperature=temperature)
+    if provider is LLMProvider.OPENROUTER:
+        return _create_openrouter_llm(model=model, temperature=temperature)
     if provider is LLMProvider.OLLAMA:
         return _create_ollama_llm(model=model, temperature=temperature)
 
