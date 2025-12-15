@@ -17,3 +17,4 @@ __pycache__/
 # Ignore Docker files
 .env
 .idea/
+.test
