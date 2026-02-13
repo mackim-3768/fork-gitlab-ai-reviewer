@@ -10,7 +10,7 @@ GitLab Webhook(머지 요청 및 푸시 이벤트)을 받아 diff를 조회하�
 ## 개요
 
 - GitLab에서 발생하는 다음 이벤트를 처리합니다.
-  - 머지 요청 이벤트(`object_kind = "merge_request"`, action: `open`인 경우만 처리)
+  - 머지 요청 이벤트(`object_kind = "merge_request"`, action: `open`/`update`/`reopen`인 경우 처리)
   - 푸시 이벤트(`object_kind = "push"`)
 - 각 이벤트에 대해 GitLab API로 diff를 조회한 뒤, LangChain LLM 클라이언트를 통해 선택한 provider(OpenAI, Gemini, Ollama, OpenRouter 등)로 리뷰를 생성합니다.
 - 생성된 리뷰를 다음 위치에 댓글로 남깁니다.
@@ -39,7 +39,7 @@ GitLab Webhook은 이 엔드포인트로 이벤트를 전송해야 합니다.
 
 ### 1. 머지 요청(Merge Request) 플로우
 
-1. GitLab에서 MR이 **open** 상태로 생성되면 Webhook 호출
+1. GitLab에서 MR이 **open**/**update**/**reopen** 상태 이벤트를 발생시키면 Webhook 호출
 2. 헤더 `X-Gitlab-Token` 값을 `GITLAB_WEBHOOK_SECRET_TOKEN` 환경 변수와 비교하여 인증
 3. 아래 GitLab API로 MR diff 조회
 
@@ -370,6 +370,6 @@ LLM 호출 결과를 JSON으로 POST 합니다. 성공/실패는 `status` 필드
 ## 한계 및 주의사항
 
 - 전체 코드베이스가 아닌 git diff 정보만을 가지고 대답하기 때문에 답변이 정확하지 않을 수 있습니다.
-- 머지 요청의 경우 `action = "open"`인 이벤트만 처리합니다. 이후 업데이트/재오픈 이벤트는 기본 코드에서는 무시합니다.
+- 머지 요청의 경우 `action = "open"`, `"update"`, `"reopen"` 이벤트를 처리합니다.
 - 매우 큰 diff의 경우 토큰 제한에 걸릴 수 있습니다.
 - 이 도구는 **인공지능 보조 도구**일 뿐이며, 최종 리뷰 책임은 항상 사람에게 있습니다. AI가 제안한 내용을 그대로 수용하기보다는 참고 자료로 활용하는 것을 권장합니다.

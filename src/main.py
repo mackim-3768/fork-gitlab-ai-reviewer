@@ -77,12 +77,13 @@ AI_PROGRESS_MESSAGE = (
     "\n"
     "이 코멘트는 자동으로 생성되었습니다."
 )
+SUPPORTED_MERGE_REQUEST_ACTIONS = {"open", "update", "reopen"}
 
 
 def handle_merge_request_event(payload):
     action = payload["object_attributes"]["action"]
-    if action != "open":
-        return "Not a  PR open", 200
+    if action not in SUPPORTED_MERGE_REQUEST_ACTIONS:
+        return "Unsupported merge_request action", 200
 
     project_id = payload["project"]["id"]
     mr_id = payload["object_attributes"]["iid"]
