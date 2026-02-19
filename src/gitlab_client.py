@@ -1,5 +1,6 @@
 import logging
 from typing import Any, Dict, List
+from urllib.parse import quote
 
 import requests
 
@@ -97,3 +98,29 @@ def post_commit_comment(
         commit_id,
         response.status_code,
     )
+
+
+def get_repository_file_raw(
+    api_base_url: str,
+    access_token: str,
+    project_id: int,
+    file_path: str,
+    ref: str,
+) -> str:
+    """GitLab 저장소에서 특정 ref 기준 파일 raw 본문을 조회한다."""
+
+    encoded_path = quote(file_path, safe="")
+    url = f"{api_base_url}/projects/{project_id}/repository/files/{encoded_path}/raw"
+    headers = {"Private-Token": access_token}
+    params = {"ref": ref}
+
+    response = requests.get(url, headers=headers, params=params)
+    logger.info(
+        "Fetched repository file raw: project_id=%s, ref=%s, path=%s, status_code=%s",
+        project_id,
+        ref,
+        file_path,
+        response.status_code,
+    )
+    response.raise_for_status()
+    return response.text
