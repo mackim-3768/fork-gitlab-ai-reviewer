@@ -1,6 +1,6 @@
 from typing import List, TypedDict
 
-from .types import ChatMessageDict
+from src.shared.types import ChatMessageDict
 
 
 class BoyScoutFile(TypedDict):

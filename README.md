@@ -115,6 +115,7 @@ Python 의존성은 `pyproject.toml`로 관리되며, 로컬 개발 시 **uv** �
 LLM_PROVIDER=openai # LLM provider [openai (default) / gemini / ollama / openrouter]
 LLM_MODEL=gpt-5-mini # LLM 모델명 [gpt-5-mini (default) , gemini-2.5-pro, llama3, ...]
 LLM_TIMEOUT_SECONDS=300 # LLM API timeout seconds [default: 300]
+GITLAB_REQUEST_TIMEOUT_SECONDS=10 # GitLab API timeout seconds [default: 10]
 
 OPENAI_API_KEY=your-openai-api-key # provider=openai 인 경우 필요
 GOOGLE_API_KEY=your-google-api-key # provider=gemini 인 경우 필요
@@ -201,7 +202,7 @@ http://localhost:9655/webhook
 컨테이너 내부에서는 다음 커맨드로 애플리케이션이 실행됩니다.
 
 ```bash
-gunicorn --bind 0.0.0.0:9655 src.main:app
+gunicorn --bind 0.0.0.0:9655 src.app.main:app
 ```
 
 ---
