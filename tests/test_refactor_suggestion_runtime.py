@@ -1,5 +1,5 @@
-from src.domains.boy_scout.service import BoyScoutReviewService
-from src.domains.boy_scout.tasks import BoyScoutReviewTask
+from src.domains.refactor_suggestion.service import RefactorSuggestionReviewService
+from src.domains.refactor_suggestion.tasks import RefactorSuggestionReviewTask
 
 
 class _FakeGitLabClient:
@@ -45,11 +45,11 @@ class _FakeMonitoring:
         self.error_calls += 1
 
 
-def test_boy_scout_service_releases_claim_on_error() -> None:
+def test_refactor_suggestion_service_releases_claim_on_error() -> None:
     state_repo = _FakeStateRepo()
     monitoring = _FakeMonitoring()
 
-    service = BoyScoutReviewService(
+    service = RefactorSuggestionReviewService(
         gitlab_client=_FakeGitLabClient(),
         llm_client=_FailingLLMClient(),
         state_repo=state_repo,
@@ -57,7 +57,7 @@ def test_boy_scout_service_releases_claim_on_error() -> None:
     )
 
     service.run_task(
-        BoyScoutReviewTask(
+        RefactorSuggestionReviewTask(
             project_id=1,
             merge_request_iid=2,
             source_ref="main",

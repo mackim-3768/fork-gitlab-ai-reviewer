@@ -2,13 +2,13 @@ from __future__ import annotations
 
 import logging
 
-from src.domains.boy_scout.prompt import BoyScoutFile, generate_boy_scout_prompt
-from src.domains.boy_scout.selector import collect_candidate_paths, truncate_text
-from src.domains.boy_scout.tasks import BoyScoutReviewTask
+from src.domains.refactor_suggestion.prompt import RefactorSuggestionFile, generate_refactor_suggestion_prompt
+from src.domains.refactor_suggestion.selector import collect_candidate_paths, truncate_text
+from src.domains.refactor_suggestion.tasks import RefactorSuggestionReviewTask
 from src.infra.clients.gitlab import GitLabClient
 from src.infra.clients.llm import LLMClient
 from src.infra.monitoring.llm_webhook import LLMMonitoringWebhookClient
-from src.infra.repositories.boy_scout_state_repo import BoyScoutStateRepository
+from src.infra.repositories.refactor_suggestion_state_repo import RefactorSuggestionStateRepository
 from src.shared.comment_utils import build_llm_footer
 
 
@@ -17,26 +17,26 @@ logger = logging.getLogger(__name__)
 
 def _build_comment_header() -> str:
     return (
-        "### 🌲 Boy Scout Review (Open Event, One-time)\n"
+        "### 🌲 Refactor Suggestion Review (Open Event, One-time)\n"
         "이번 코멘트는 **diff 패치 리뷰와 별개**로, 변경된 코드 파일의 전체 본문을 기준으로\n"
-        "점진적 리팩토링(보이스카웃 규칙) 제안을 제공합니다."
+        "점진적 리팩토링(리팩토링 제안) 제안을 제공합니다."
     )
 
 
 def _build_no_target_files_comment() -> str:
     return (
-        "### 🌲 Boy Scout Review (Open Event, One-time)\n"
-        "이번 MR에서는 보이스카웃 리뷰 대상이 되는 코드 파일을 찾지 못해 분석을 생략했습니다."
+        "### 🌲 Refactor Suggestion Review (Open Event, One-time)\n"
+        "이번 MR에서는 리팩토링 제안 리뷰 대상이 되는 코드 파일을 찾지 못해 분석을 생략했습니다."
     )
 
 
-class BoyScoutReviewService:
+class RefactorSuggestionReviewService:
     def __init__(
         self,
         *,
         gitlab_client: GitLabClient,
         llm_client: LLMClient,
-        state_repo: BoyScoutStateRepository,
+        state_repo: RefactorSuggestionStateRepository,
         monitoring_client: LLMMonitoringWebhookClient,
     ) -> None:
         self._gitlab_client = gitlab_client
@@ -44,9 +44,9 @@ class BoyScoutReviewService:
         self._state_repo = state_repo
         self._monitoring_client = monitoring_client
 
-    def run_task(self, task: BoyScoutReviewTask) -> None:
+    def run_task(self, task: RefactorSuggestionReviewTask) -> None:
         logger.info(
-            "Running boy scout review: project_id=%s, mr_id=%s, source_ref=%s",
+            "Running refactor suggestion review: project_id=%s, mr_id=%s, source_ref=%s",
             task.project_id,
             task.merge_request_iid,
             task.source_ref,
@@ -72,7 +72,7 @@ class BoyScoutReviewService:
                 self._state_repo.mark_completed(task.project_id, task.merge_request_iid)
                 return
 
-            files: list[BoyScoutFile] = []
+            files: list[RefactorSuggestionFile] = []
             consumed_chars = 0
 
             for path in candidate_paths:
@@ -87,7 +87,7 @@ class BoyScoutReviewService:
                     )
                 except Exception:
                     logger.exception(
-                        "Failed to fetch repository file for boy scout review: project_id=%s, mr_id=%s, path=%s",
+                        "Failed to fetch repository file for refactor suggestion review: project_id=%s, mr_id=%s, path=%s",
                         task.project_id,
                         task.merge_request_iid,
                         path,
@@ -121,7 +121,7 @@ class BoyScoutReviewService:
                 self._state_repo.mark_completed(task.project_id, task.merge_request_iid)
                 return
 
-            messages = generate_boy_scout_prompt(files)
+            messages = generate_refactor_suggestion_prompt(files)
             llm_result = self._llm_client.generate_review_content_with_stats(messages)
 
             comment_body = (
@@ -137,7 +137,7 @@ class BoyScoutReviewService:
             )
 
             self._monitoring_client.send_success(
-                review_type="boy_scout_review",
+                review_type="refactor_suggestion_review",
                 gitlab_context={
                     "project_id": task.project_id,
                     "merge_request_iid": task.merge_request_iid,
@@ -147,12 +147,12 @@ class BoyScoutReviewService:
             self._state_repo.mark_completed(task.project_id, task.merge_request_iid)
         except Exception as error:  # noqa: BLE001 - external APIs wrapper
             logger.exception(
-                "Failed to run boy scout review: project_id=%s, mr_id=%s",
+                "Failed to run refactor suggestion review: project_id=%s, mr_id=%s",
                 task.project_id,
                 task.merge_request_iid,
             )
             self._monitoring_client.send_error(
-                review_type="boy_scout_review",
+                review_type="refactor_suggestion_review",
                 gitlab_context={
                     "project_id": task.project_id,
                     "merge_request_iid": task.merge_request_iid,

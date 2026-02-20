@@ -74,18 +74,18 @@ class AppSettings:
 
     enable_merge_request_review: bool
     enable_push_review: bool
-    enable_boy_scout_review: bool
+    enable_refactor_suggestion_review: bool
 
     review_max_requests_per_minute: int
     review_worker_concurrency: int
     review_max_pending_jobs: int
 
-    boy_scout_max_requests_per_minute: int
-    boy_scout_worker_concurrency: int
-    boy_scout_max_pending_jobs: int
-    boy_scout_max_files: int
-    boy_scout_max_file_chars: int
-    boy_scout_max_total_chars: int
+    refactor_suggestion_max_requests_per_minute: int
+    refactor_suggestion_worker_concurrency: int
+    refactor_suggestion_max_pending_jobs: int
+    refactor_suggestion_max_files: int
+    refactor_suggestion_max_file_chars: int
+    refactor_suggestion_max_total_chars: int
 
     llm_provider: str
     llm_model: str
@@ -100,7 +100,7 @@ class AppSettings:
     review_system_prompt: str | None
 
     review_cache_db_path: str
-    boy_scout_state_db_path: str
+    refactor_suggestion_state_db_path: str
 
     llm_monitoring_webhook_url: str | None
     llm_monitoring_timeout_seconds: float
@@ -129,7 +129,7 @@ class AppSettings:
             ),
             enable_merge_request_review=_get_bool("ENABLE_MERGE_REQUEST_REVIEW", True),
             enable_push_review=_get_bool("ENABLE_PUSH_REVIEW", True),
-            enable_boy_scout_review=_get_bool("ENABLE_BOY_SCOUT_REVIEW", True),
+            enable_refactor_suggestion_review=_get_bool("ENABLE_REFACTOR_SUGGESTION_REVIEW", True),
             review_max_requests_per_minute=_get_int(
                 "REVIEW_MAX_REQUESTS_PER_MINUTE", 2, min_value=1
             ),
@@ -137,21 +137,21 @@ class AppSettings:
                 "REVIEW_WORKER_CONCURRENCY", 1, min_value=1
             ),
             review_max_pending_jobs=_get_int("REVIEW_MAX_PENDING_JOBS", 100, min_value=1),
-            boy_scout_max_requests_per_minute=_get_int(
-                "BOY_SCOUT_MAX_REQUESTS_PER_MINUTE", 1, min_value=1
+            refactor_suggestion_max_requests_per_minute=_get_int(
+                "REFACTOR_SUGGESTION_MAX_REQUESTS_PER_MINUTE", 1, min_value=1
             ),
-            boy_scout_worker_concurrency=_get_int(
-                "BOY_SCOUT_WORKER_CONCURRENCY", 1, min_value=1
+            refactor_suggestion_worker_concurrency=_get_int(
+                "REFACTOR_SUGGESTION_WORKER_CONCURRENCY", 1, min_value=1
             ),
-            boy_scout_max_pending_jobs=_get_int(
-                "BOY_SCOUT_MAX_PENDING_JOBS", 50, min_value=1
+            refactor_suggestion_max_pending_jobs=_get_int(
+                "REFACTOR_SUGGESTION_MAX_PENDING_JOBS", 50, min_value=1
             ),
-            boy_scout_max_files=_get_int("BOY_SCOUT_MAX_FILES", 20, min_value=1),
-            boy_scout_max_file_chars=_get_int(
-                "BOY_SCOUT_MAX_FILE_CHARS", 12000, min_value=1
+            refactor_suggestion_max_files=_get_int("REFACTOR_SUGGESTION_MAX_FILES", 20, min_value=1),
+            refactor_suggestion_max_file_chars=_get_int(
+                "REFACTOR_SUGGESTION_MAX_FILE_CHARS", 12000, min_value=1
             ),
-            boy_scout_max_total_chars=_get_int(
-                "BOY_SCOUT_MAX_TOTAL_CHARS", 60000, min_value=1
+            refactor_suggestion_max_total_chars=_get_int(
+                "REFACTOR_SUGGESTION_MAX_TOTAL_CHARS", 60000, min_value=1
             ),
             llm_provider=provider,
             llm_model=llm_model,
@@ -167,8 +167,8 @@ class AppSettings:
             review_system_prompt=_get_optional_str("REVIEW_SYSTEM_PROMPT"),
             review_cache_db_path=_get_optional_str("REVIEW_CACHE_DB_PATH")
             or "data/review_cache.db",
-            boy_scout_state_db_path=_get_optional_str("BOY_SCOUT_STATE_DB_PATH")
-            or "data/boy_scout_state.db",
+            refactor_suggestion_state_db_path=_get_optional_str("REFACTOR_SUGGESTION_STATE_DB_PATH")
+            or "data/refactor_suggestion_state.db",
             llm_monitoring_webhook_url=_get_optional_str("LLM_MONITORING_WEBHOOK_URL"),
             llm_monitoring_timeout_seconds=_get_float(
                 "LLM_MONITORING_TIMEOUT_SECONDS", 3.0, min_value=0.001
@@ -178,10 +178,10 @@ class AppSettings:
         if (
             not settings.enable_merge_request_review
             and not settings.enable_push_review
-            and not settings.enable_boy_scout_review
+            and not settings.enable_refactor_suggestion_review
         ):
             raise ConfigurationError(
-                "At least one of ENABLE_MERGE_REQUEST_REVIEW, ENABLE_PUSH_REVIEW, ENABLE_BOY_SCOUT_REVIEW must be true"
+                "At least one of ENABLE_MERGE_REQUEST_REVIEW, ENABLE_PUSH_REVIEW, ENABLE_REFACTOR_SUGGESTION_REVIEW must be true"
             )
 
         if settings.llm_provider == "openai" and not settings.openai_api_key:

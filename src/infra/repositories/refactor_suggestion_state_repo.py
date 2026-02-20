@@ -8,7 +8,7 @@ import sqlite3
 logger = logging.getLogger(__name__)
 
 
-class BoyScoutStateRepository:
+class RefactorSuggestionStateRepository:
     def __init__(self, db_path: str) -> None:
         self._db_path = db_path
 
@@ -20,7 +20,7 @@ class BoyScoutStateRepository:
         conn = sqlite3.connect(self._db_path)
         conn.execute(
             """
-            CREATE TABLE IF NOT EXISTS boy_scout_review_state (
+            CREATE TABLE IF NOT EXISTS refactor_suggestion_review_state (
                 project_id INTEGER NOT NULL,
                 merge_request_iid INTEGER NOT NULL,
                 status TEXT NOT NULL,
@@ -37,7 +37,7 @@ class BoyScoutStateRepository:
             conn = self._get_connection()
             conn.execute(
                 """
-                INSERT INTO boy_scout_review_state (project_id, merge_request_iid, status, updated_at)
+                INSERT INTO refactor_suggestion_review_state (project_id, merge_request_iid, status, updated_at)
                 VALUES (?, ?, 'queued', datetime('now'))
                 """,
                 (project_id, merge_request_iid),
@@ -47,7 +47,7 @@ class BoyScoutStateRepository:
         except sqlite3.IntegrityError:
             return False
         except Exception:
-            logger.exception("Failed to claim boy scout review slot")
+            logger.exception("Failed to claim refactor suggestion review slot")
             return False
         finally:
             if conn is not None:
@@ -59,7 +59,7 @@ class BoyScoutStateRepository:
             conn = self._get_connection()
             conn.execute(
                 """
-                UPDATE boy_scout_review_state
+                UPDATE refactor_suggestion_review_state
                 SET status = 'completed', updated_at = datetime('now')
                 WHERE project_id = ? AND merge_request_iid = ?
                 """,
@@ -67,7 +67,7 @@ class BoyScoutStateRepository:
             )
             conn.commit()
         except Exception:
-            logger.exception("Failed to mark boy scout review as completed")
+            logger.exception("Failed to mark refactor suggestion review as completed")
         finally:
             if conn is not None:
                 conn.close()
@@ -78,14 +78,14 @@ class BoyScoutStateRepository:
             conn = self._get_connection()
             conn.execute(
                 """
-                DELETE FROM boy_scout_review_state
+                DELETE FROM refactor_suggestion_review_state
                 WHERE project_id = ? AND merge_request_iid = ? AND status = 'queued'
                 """,
                 (project_id, merge_request_iid),
             )
             conn.commit()
         except Exception:
-            logger.exception("Failed to release boy scout review claim")
+            logger.exception("Failed to release refactor suggestion review claim")
         finally:
             if conn is not None:
                 conn.close()
@@ -97,7 +97,7 @@ class BoyScoutStateRepository:
             cursor = conn.execute(
                 """
                 SELECT status
-                FROM boy_scout_review_state
+                FROM refactor_suggestion_review_state
                 WHERE project_id = ? AND merge_request_iid = ?
                 """,
                 (project_id, merge_request_iid),
@@ -107,7 +107,7 @@ class BoyScoutStateRepository:
                 return None
             return str(row[0])
         except Exception:
-            logger.exception("Failed to read boy scout review status")
+            logger.exception("Failed to read refactor suggestion review status")
             return None
         finally:
             if conn is not None:

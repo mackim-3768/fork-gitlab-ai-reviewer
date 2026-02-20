@@ -7,15 +7,15 @@ from flask import Flask
 from src.app.config import AppSettings
 from src.app.orchestrator import WebhookOrchestrator
 from src.app.webhook import register_webhook_routes
-from src.domains.boy_scout.service import BoyScoutReviewService
+from src.domains.refactor_suggestion.service import RefactorSuggestionReviewService
 from src.domains.review.service import ReviewService
 from src.domains.review.tasks import MergeRequestReviewTask, PushReviewTask
-from src.domains.boy_scout.tasks import BoyScoutReviewTask
+from src.domains.refactor_suggestion.tasks import RefactorSuggestionReviewTask
 from src.infra.clients.gitlab import GitLabClient, GitLabClientConfig
 from src.infra.clients.llm import LLMClient, LLMClientConfig
 from src.infra.monitoring.llm_webhook import LLMMonitoringWebhookClient
 from src.infra.queue.inprocess_queue import InProcessWorkerQueue
-from src.infra.repositories.boy_scout_state_repo import BoyScoutStateRepository
+from src.infra.repositories.refactor_suggestion_state_repo import RefactorSuggestionStateRepository
 from src.infra.repositories.review_cache_repo import ReviewCacheRepository
 
 
@@ -64,7 +64,7 @@ def create_app() -> Flask:
         timeout_seconds=settings.llm_monitoring_timeout_seconds,
     )
     review_cache_repo = ReviewCacheRepository(settings.review_cache_db_path)
-    boy_scout_state_repo = BoyScoutStateRepository(settings.boy_scout_state_db_path)
+    refactor_suggestion_state_repo = RefactorSuggestionStateRepository(settings.refactor_suggestion_state_db_path)
 
     review_service = ReviewService(
         gitlab_client=gitlab_client,
@@ -73,10 +73,10 @@ def create_app() -> Flask:
         monitoring_client=monitoring_client,
         review_system_prompt=settings.review_system_prompt,
     )
-    boy_scout_service = BoyScoutReviewService(
+    refactor_suggestion_service = RefactorSuggestionReviewService(
         gitlab_client=gitlab_client,
         llm_client=llm_client,
-        state_repo=boy_scout_state_repo,
+        state_repo=refactor_suggestion_state_repo,
         monitoring_client=monitoring_client,
     )
 
@@ -90,22 +90,22 @@ def create_app() -> Flask:
             max_pending_jobs_soft_limit=settings.review_max_pending_jobs,
         )
 
-    boy_scout_queue: InProcessWorkerQueue[BoyScoutReviewTask] | None = None
-    if settings.enable_boy_scout_review:
-        boy_scout_queue = InProcessWorkerQueue(
-            name="boy-scout",
-            handler=boy_scout_service.run_task,
-            max_requests_per_minute=settings.boy_scout_max_requests_per_minute,
-            worker_concurrency=settings.boy_scout_worker_concurrency,
-            max_pending_jobs_soft_limit=settings.boy_scout_max_pending_jobs,
+    refactor_suggestion_queue: InProcessWorkerQueue[RefactorSuggestionReviewTask] | None = None
+    if settings.enable_refactor_suggestion_review:
+        refactor_suggestion_queue = InProcessWorkerQueue(
+            name="refactor-suggestion",
+            handler=refactor_suggestion_service.run_task,
+            max_requests_per_minute=settings.refactor_suggestion_max_requests_per_minute,
+            worker_concurrency=settings.refactor_suggestion_worker_concurrency,
+            max_pending_jobs_soft_limit=settings.refactor_suggestion_max_pending_jobs,
         )
 
     orchestrator = WebhookOrchestrator(
         settings=settings,
         gitlab_client=gitlab_client,
         review_queue=review_queue,
-        boy_scout_queue=boy_scout_queue,
-        boy_scout_state_repo=boy_scout_state_repo,
+        refactor_suggestion_queue=refactor_suggestion_queue,
+        refactor_suggestion_state_repo=refactor_suggestion_state_repo,
     )
 
     app = Flask(__name__)

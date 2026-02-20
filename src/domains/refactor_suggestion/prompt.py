@@ -3,14 +3,14 @@ from typing import List, TypedDict
 from src.shared.types import ChatMessageDict
 
 
-class BoyScoutFile(TypedDict):
+class RefactorSuggestionFile(TypedDict):
     path: str
     content: str
     truncated: bool
 
 
-DEFAULT_BOY_SCOUT_SYSTEM_INSTRUCTION = """
-당신은 시니어 테크 리드이며, 보이스카웃 규칙("코드를 이전보다 조금 더 깨끗하게 남긴다") 관점의 리팩토링 리뷰어입니다.
+DEFAULT_REFACTOR_SUGGESTION_SYSTEM_INSTRUCTION = """
+당신은 시니어 테크 리드이며, 리팩토링 제안("코드를 이전보다 조금 더 깨끗하게 남긴다") 관점의 리팩토링 리뷰어입니다.
 
 목표:
 - 아래 제공된 "파일 전체 코드"를 기준으로, 유지보수성과 안전성을 높이는 실질적인 개선안을 제시합니다.
@@ -27,7 +27,7 @@ DEFAULT_BOY_SCOUT_SYSTEM_INSTRUCTION = """
 - 최대 5개, 중요도 순으로 제시
 - 각 항목은 [파일경로]로 시작
 
-### 2. File-by-File Boy Scout Suggestions
+### 2. File-by-File Refactoring Suggestions
 - 파일별로 1~3개 개선안
 - 각 개선안에 "왜 지금 개선하면 좋은지"를 한 문장 포함
 
@@ -39,7 +39,7 @@ DEFAULT_BOY_SCOUT_SYSTEM_INSTRUCTION = """
 """
 
 
-def generate_boy_scout_prompt(files: List[BoyScoutFile]) -> List[ChatMessageDict]:
+def generate_refactor_suggestion_prompt(files: List[RefactorSuggestionFile]) -> List[ChatMessageDict]:
     file_sections: List[str] = []
     for file in files:
         truncate_note = " (truncated)" if file.get("truncated") else ""
@@ -56,11 +56,11 @@ def generate_boy_scout_prompt(files: List[BoyScoutFile]) -> List[ChatMessageDict
 
     user_prompt = (
         "다음은 이번 MR에서 변경된 코드 파일의 전체 본문입니다.\n"
-        "보이스카웃 규칙 관점에서 리팩토링/정리 제안을 작성하세요.\n\n"
+        "리팩토링 제안 관점에서 리팩토링/정리 제안을 작성하세요.\n\n"
         + "\n\n".join(file_sections)
     )
 
     return [
-        {"role": "system", "content": DEFAULT_BOY_SCOUT_SYSTEM_INSTRUCTION},
+        {"role": "system", "content": DEFAULT_REFACTOR_SUGGESTION_SYSTEM_INSTRUCTION},
         {"role": "user", "content": user_prompt},
     ]

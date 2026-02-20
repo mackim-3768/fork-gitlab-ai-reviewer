@@ -26,7 +26,7 @@ def test_app_settings_defaults(monkeypatch: pytest.MonkeyPatch) -> None:
     assert settings.llm_provider == "openai"
     assert settings.llm_model == "gpt-5-mini"
     assert settings.review_max_requests_per_minute == 2
-    assert settings.boy_scout_max_files == 20
+    assert settings.refactor_suggestion_max_files == 20
 
 
 def test_app_settings_missing_required_raises(monkeypatch: pytest.MonkeyPatch) -> None:

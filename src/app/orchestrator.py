@@ -4,11 +4,11 @@ import logging
 from typing import Any
 
 from src.app.config import AppSettings
-from src.domains.boy_scout.tasks import BoyScoutReviewTask
+from src.domains.refactor_suggestion.tasks import RefactorSuggestionReviewTask
 from src.domains.review.tasks import MergeRequestReviewTask, PushReviewTask
 from src.infra.clients.gitlab import GitLabClient
 from src.infra.queue.inprocess_queue import InProcessWorkerQueue
-from src.infra.repositories.boy_scout_state_repo import BoyScoutStateRepository
+from src.infra.repositories.refactor_suggestion_state_repo import RefactorSuggestionStateRepository
 
 
 logger = logging.getLogger(__name__)
@@ -28,14 +28,14 @@ class WebhookOrchestrator:
         settings: AppSettings,
         gitlab_client: GitLabClient,
         review_queue: InProcessWorkerQueue[MergeRequestReviewTask | PushReviewTask] | None,
-        boy_scout_queue: InProcessWorkerQueue[BoyScoutReviewTask] | None,
-        boy_scout_state_repo: BoyScoutStateRepository,
+        refactor_suggestion_queue: InProcessWorkerQueue[RefactorSuggestionReviewTask] | None,
+        refactor_suggestion_state_repo: RefactorSuggestionStateRepository,
     ) -> None:
         self._settings = settings
         self._gitlab_client = gitlab_client
         self._review_queue = review_queue
-        self._boy_scout_queue = boy_scout_queue
-        self._boy_scout_state_repo = boy_scout_state_repo
+        self._refactor_suggestion_queue = refactor_suggestion_queue
+        self._refactor_suggestion_state_repo = refactor_suggestion_state_repo
 
     @staticmethod
     def _extract_mr_source_ref(payload: dict[str, Any]) -> str | None:
@@ -95,40 +95,40 @@ class WebhookOrchestrator:
 
         if (
             action == "open"
-            and self._settings.enable_boy_scout_review
-            and self._boy_scout_queue is not None
+            and self._settings.enable_refactor_suggestion_review
+            and self._refactor_suggestion_queue is not None
         ):
-            if self._boy_scout_state_repo.try_claim(project_id, mr_id):
+            if self._refactor_suggestion_state_repo.try_claim(project_id, mr_id):
                 source_ref = self._extract_mr_source_ref(payload)
                 if not source_ref:
                     logger.warning(
-                        "Skipping boy scout review enqueue due to missing source ref: project_id=%s, mr_id=%s",
+                        "Skipping refactor suggestion review enqueue due to missing source ref: project_id=%s, mr_id=%s",
                         project_id,
                         mr_id,
                     )
-                    self._boy_scout_state_repo.release_claim(project_id, mr_id)
+                    self._refactor_suggestion_state_repo.release_claim(project_id, mr_id)
                 else:
                     try:
-                        self._boy_scout_queue.enqueue(
-                            BoyScoutReviewTask(
+                        self._refactor_suggestion_queue.enqueue(
+                            RefactorSuggestionReviewTask(
                                 project_id=project_id,
                                 merge_request_iid=mr_id,
                                 source_ref=source_ref,
-                                max_files=self._settings.boy_scout_max_files,
-                                max_file_chars=self._settings.boy_scout_max_file_chars,
-                                max_total_chars=self._settings.boy_scout_max_total_chars,
+                                max_files=self._settings.refactor_suggestion_max_files,
+                                max_file_chars=self._settings.refactor_suggestion_max_file_chars,
+                                max_total_chars=self._settings.refactor_suggestion_max_total_chars,
                             )
                         )
                     except Exception:
                         logger.exception(
-                            "Failed to enqueue boy scout review task: project_id=%s, mr_id=%s",
+                            "Failed to enqueue refactor suggestion review task: project_id=%s, mr_id=%s",
                             project_id,
                             mr_id,
                         )
-                        self._boy_scout_state_repo.release_claim(project_id, mr_id)
+                        self._refactor_suggestion_state_repo.release_claim(project_id, mr_id)
             else:
                 logger.info(
-                    "Skipping boy scout review enqueue (already queued/completed): project_id=%s, mr_id=%s",
+                    "Skipping refactor suggestion review enqueue (already queued/completed): project_id=%s, mr_id=%s",
                     project_id,
                     mr_id,
                 )

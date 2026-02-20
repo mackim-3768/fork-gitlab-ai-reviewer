@@ -24,7 +24,7 @@ def register_webhook_routes(
         if object_kind == "merge_request":
             if (
                 not settings.enable_merge_request_review
-                and not settings.enable_boy_scout_review
+                and not settings.enable_refactor_suggestion_review
             ):
                 return "merge_request handling disabled", 200
             return orchestrator.handle_merge_request_event(payload)

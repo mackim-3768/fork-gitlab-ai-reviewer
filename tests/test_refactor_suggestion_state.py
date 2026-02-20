@@ -1,8 +1,8 @@
-from src.infra.repositories.boy_scout_state_repo import BoyScoutStateRepository
+from src.infra.repositories.refactor_suggestion_state_repo import RefactorSuggestionStateRepository
 
 
 def test_try_claim_allows_only_once(tmp_path) -> None:
-    repo = BoyScoutStateRepository(str(tmp_path / "boy_scout_state_1.db"))
+    repo = RefactorSuggestionStateRepository(str(tmp_path / "refactor_suggestion_state_1.db"))
 
     assert repo.try_claim(1, 10) is True
     assert repo.try_claim(1, 10) is False
@@ -10,7 +10,7 @@ def test_try_claim_allows_only_once(tmp_path) -> None:
 
 
 def test_release_only_removes_queued(tmp_path) -> None:
-    repo = BoyScoutStateRepository(str(tmp_path / "boy_scout_state_2.db"))
+    repo = RefactorSuggestionStateRepository(str(tmp_path / "refactor_suggestion_state_2.db"))
 
     assert repo.try_claim(2, 20) is True
     repo.release_claim(2, 20)

@@ -1,4 +1,4 @@
-from src.domains.boy_scout.selector import collect_candidate_paths, truncate_text
+from src.domains.refactor_suggestion.selector import collect_candidate_paths, truncate_text
 
 
 def test_collect_candidate_paths_filters_deleted_non_code_and_duplicates() -> None:
